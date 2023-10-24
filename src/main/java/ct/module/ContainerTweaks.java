@@ -23,11 +23,11 @@ import java.util.Set;
 
 public class ContainerTweaks extends ToggleableModule {
     final BooleanSetting dragMove = new BooleanSetting("DragMove", true);
-    final BindSetting dragMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().parseKey("LEFT_SHIFT"));
+    final BindSetting dragMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().createKeyboardKey(GLFW.GLFW_KEY_LEFT_SHIFT));
     // Shulkers with larger NBT seem to be most sensitive to multiple moves per tick
     final NumberSetting<Integer> maxDragMovesPerTick = new NumberSetting<>("MaxPerTick", 2, 1, 5);
     final BooleanSetting quickMove = new BooleanSetting("QuickMove", true);
-    final BindSetting quickMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().parseKey("LEFT_CONTROL"));
+    final BindSetting quickMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().createKeyboardKey(GLFW.GLFW_KEY_LEFT_CONTROL));
     final BooleanSetting dragPickup = new BooleanSetting("DragPickup", true);
     private boolean dragging = false;
     private Set<Integer> dragMovedSlots = new HashSet<>(5);
