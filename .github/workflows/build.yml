@@ -1,0 +1,29 @@
+name: Plugin Build
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Gradle Wrapper Verification
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Elevate wrapper permissions
+        run: chmod +x ./gradlew
+
+      - name: Build ZenithProxy
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build
