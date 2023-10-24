@@ -1,6 +1,7 @@
 package ct.module;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
@@ -70,6 +71,7 @@ public class ContainerTweaks extends ToggleableModule {
             if (mouseStack.isEmpty()) return;
             Slot hoveredSlot = ((IMixinAbstractContainerScreen) handler).getHoveredSlot();
             if (hoveredSlot == null) return;
+            if (handler instanceof CraftingScreen craftingScreen && hoveredSlot.index < craftingScreen.getMenu().getSize()) return;
             if (mouseStack.getCount() + hoveredSlot.getItem().getCount() > mouseStack.getMaxStackSize()) return;
             pickup(handler, hoveredSlot.index);
             if (hoveredSlot instanceof ResultSlot
