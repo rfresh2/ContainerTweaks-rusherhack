@@ -4,7 +4,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.inventory.*;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.lwjgl.glfw.GLFW;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.accessors.gui.IMixinAbstractContainerScreen;
@@ -29,6 +31,7 @@ public class ContainerTweaks extends ToggleableModule {
     final BooleanSetting quickMove = new BooleanSetting("QuickMove", true);
     final BindSetting quickMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().createKeyboardKey(GLFW.GLFW_KEY_LEFT_CONTROL));
     final BooleanSetting quickMoveAll = new BooleanSetting("MoveAll", "Whether to move only items matching the hovered stack or all items in the container", false);
+    final BooleanSetting quickMoveOnlyShulkers = new BooleanSetting("OnlyShulkers", "Whether to only quick move shulkers", false);
     final BooleanSetting dragPickup = new BooleanSetting("DragPickup", true);
     private boolean dragging = false;
     private Set<Integer> dragMovedSlots = new HashSet<>(5);
@@ -36,7 +39,7 @@ public class ContainerTweaks extends ToggleableModule {
     public ContainerTweaks() {
         super("ContainerTweaks", "Simple tweaks for moving items in containers", ModuleCategory.MISC);
         dragMove.addSubSettings(dragMoveBind, maxDragMovesPerTick);
-        quickMove.addSubSettings(quickMoveBind, quickMoveAll);
+        quickMove.addSubSettings(quickMoveBind, quickMoveAll, quickMoveOnlyShulkers);
         registerSettings(dragMove, quickMove, dragPickup);
     }
 
@@ -109,6 +112,10 @@ public class ContainerTweaks extends ToggleableModule {
                     //  there's gotta be some processing happening elsewhere during this
                     && (quickMoveAll.getValue() || AbstractContainerMenu.canItemQuickReplace(slot, mouseStack, true))
                 ) {
+                    if (quickMoveOnlyShulkers.getValue()
+                        && (!(slot.getItem().getItem() instanceof BlockItem blockItem)
+                        || !(blockItem.getBlock() instanceof ShulkerBoxBlock)))
+                        continue;
                     quickMove(handler, slot.index);
                 }
             }
