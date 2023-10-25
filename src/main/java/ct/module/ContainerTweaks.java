@@ -28,6 +28,7 @@ public class ContainerTweaks extends ToggleableModule {
     final NumberSetting<Integer> maxDragMovesPerTick = new NumberSetting<>("MaxPerTick", 2, 1, 5);
     final BooleanSetting quickMove = new BooleanSetting("QuickMove", true);
     final BindSetting quickMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().createKeyboardKey(GLFW.GLFW_KEY_LEFT_CONTROL));
+    final BooleanSetting quickMoveAll = new BooleanSetting("MoveAll", "Whether to move only items matching the hovered stack or all items in the container", false);
     final BooleanSetting dragPickup = new BooleanSetting("DragPickup", true);
     private boolean dragging = false;
     private Set<Integer> dragMovedSlots = new HashSet<>(5);
@@ -35,7 +36,7 @@ public class ContainerTweaks extends ToggleableModule {
     public ContainerTweaks() {
         super("ContainerTweaks", "Simple tweaks for moving items in containers", ModuleCategory.MISC);
         dragMove.addSubSettings(dragMoveBind, maxDragMovesPerTick);
-        quickMove.addSubSettings(quickMoveBind);
+        quickMove.addSubSettings(quickMoveBind, quickMoveAll);
         registerSettings(dragMove, quickMove, dragPickup);
     }
 
@@ -91,8 +92,9 @@ public class ContainerTweaks extends ToggleableModule {
             if (hoveredSlot == null) return;
             ItemStack mouseStack = mc.player.containerMenu.getCarried();
             if (mouseStack.isEmpty()) {
-                // todo: improve reliability for empty moves with large NBT shulkers on 2b2t
-                //  we may need to schedule the quick moves on the next tick
+                // todo: this state is actually not being seen for some reason
+                //  is there processing happening before or during this event in mc code elsewhere?
+                //  we do pick up the item from the click but its not this code doing it
                 pickup(handler, hoveredSlot.index);
                 mouseStack = mc.player.containerMenu.getCarried();
             }
@@ -101,7 +103,12 @@ public class ContainerTweaks extends ToggleableModule {
                     && slot.mayPickup(mc.player)
                     && slot.hasItem()
                     && slot.container == hoveredSlot.container
-                    && AbstractContainerMenu.canItemQuickReplace(slot, mouseStack, true)) {
+                    // todo: when we fail moving large nbt shulkers, canItemQuickReplace is false when it shouldn't be?
+                    //  the nbt tag on the mouseStack is slightly different in size when its literally the same item
+                    //  there's some interaction with the empty mouse stack state not being seen
+                    //  there's gotta be some processing happening elsewhere during this
+                    && (quickMoveAll.getValue() || AbstractContainerMenu.canItemQuickReplace(slot, mouseStack, true))
+                ) {
                     quickMove(handler, slot.index);
                 }
             }
