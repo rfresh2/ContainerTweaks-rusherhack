@@ -88,3 +88,13 @@ jar {
 		)
 	}
 }
+
+
+processResources {
+	inputs.property "mod_version", project.mod_version
+
+	filesMatching("rusherhack-plugin.json") {
+		expand(mod_version: project.mod_version)
+	}
+}
+
