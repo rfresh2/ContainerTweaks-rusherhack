@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.2-SNAPSHOT'
+	id 'fabric-loom' version '1.5-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -38,15 +38,12 @@ dependencies {
 	//mojmap + parchment mappings
 	mappings loom.layered() {
 		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-1.20.1:2023.07.30@zip")
+		parchment("org.parchmentmc.data:parchment-1.20.1:2023.09.03@zip")
 	}
-
-	//rusherhack api
 	rusherhackApi "org.rusherhack:rusherhack-api:1.20.1-SNAPSHOT"
 }
 
 loom {
-
 	//apply accesswidener from rusherhack-api
 	for (final def f in zipTree(this.project.configurations.rusherhackApi.singleFile)) {
 		if(f.name == "rusherhack.accesswidener") {
