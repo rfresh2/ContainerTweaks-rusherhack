@@ -38,9 +38,9 @@ dependencies {
 	//mojmap + parchment mappings
 	mappings loom.layered() {
 		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-1.20.1:2023.09.03@zip")
+		parchment("org.parchmentmc.data:parchment-1.20.3:2023.12.31@zip")
 	}
-	rusherhackApi "org.rusherhack:rusherhack-api:1.20.1-SNAPSHOT"
+	rusherhackApi "org.rusherhack:rusherhack-api:1.20.4-SNAPSHOT"
 }
 
 loom {
