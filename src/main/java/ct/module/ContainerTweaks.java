@@ -86,10 +86,9 @@ public class ContainerTweaks extends ToggleableModule {
             && mc.screen instanceof AbstractContainerScreen handler
             && (fillButton == null || stealButton == null)
         ) {
-            List<? extends GuiEventListener> children = handler.children();
             Button rhStealButton = null;
             Button rhFillButton = null;
-            for (GuiEventListener child : children) {
+            for (GuiEventListener child : handler.children()) {
                 if (child instanceof Button b && b != stealButton && b != fillButton) {
                     var buttonMessage = b.getMessage().getString();
                     if (buttonMessage.equals("Steal"))
@@ -99,29 +98,28 @@ public class ContainerTweaks extends ToggleableModule {
                 }
             }
             if (rhStealButton != null) {
-                var newButton = Button.builder(rhStealButton.getMessage(), button -> {
+                stealButton = Button.builder(rhStealButton.getMessage(), button -> {
                         handler.getMenu().slots.stream().findFirst().ifPresent(slot -> {
-                            chestStealerQuickMove(slot.container, handler);
+                            var fromContainer = slot.container;
+                            chestStealerQuickMove(fromContainer, handler);
                         });
                     })
                     .pos(rhStealButton.getX(), rhStealButton.getY())
                     .size(rhStealButton.getWidth(), rhStealButton.getHeight())
                     .build();
                 ((IMixinScreen) handler).invokeRemoveWidget(rhStealButton);
-                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton);
-                stealButton = newButton;
+                ((IMixinScreen) handler).invokeAddRenderableWidget(stealButton);
             }
             if (rhFillButton != null) {
-                var newButton = Button.builder(rhFillButton.getMessage(), button -> {
-                        Container fromContainer = mc.player.getInventory();
+                fillButton = Button.builder(rhFillButton.getMessage(), button -> {
+                        var fromContainer = mc.player.getInventory();
                         chestStealerQuickMove(fromContainer, handler);
                     })
                     .pos(rhFillButton.getX(), rhFillButton.getY())
                     .size(rhFillButton.getWidth(), rhFillButton.getHeight())
                     .build();
                 ((IMixinScreen) handler).invokeRemoveWidget(rhFillButton);
-                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton);
-                fillButton = newButton;
+                ((IMixinScreen) handler).invokeAddRenderableWidget(fillButton);
             }
         } else {
             stealButton = null;
