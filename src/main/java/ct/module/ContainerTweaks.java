@@ -1,9 +1,12 @@
 package ct.module;
 
 import com.google.common.collect.Lists;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.BlockItem;
@@ -12,6 +15,7 @@ import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.lwjgl.glfw.GLFW;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.accessors.gui.IMixinAbstractContainerScreen;
+import org.rusherhack.client.api.accessors.gui.IMixinScreen;
 import org.rusherhack.client.api.events.client.EventUpdate;
 import org.rusherhack.client.api.events.client.input.EventMouse;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
@@ -45,6 +49,11 @@ public class ContainerTweaks extends ToggleableModule {
         "Moves items from higher inv slot ids before lower slot id's when moving to player inventory",
         false
     );
+    final BooleanSetting hijackChestStealer = new BooleanSetting(
+        "ChestStealer",
+        "Hijack the ChestStealer button actions to use quick move",
+        false
+    );
     final BooleanSetting dragPickup = new BooleanSetting("DragPickup", true);
     private boolean dragging = false;
     private Set<Integer> dragMovedSlots = new HashSet<>(5);
@@ -52,7 +61,12 @@ public class ContainerTweaks extends ToggleableModule {
     public ContainerTweaks() {
         super("ContainerTweaks", "Simple tweaks for moving items in containers", ModuleCategory.MISC);
         dragMove.addSubSettings(dragMoveBind, maxDragMovesPerTick);
-        quickMove.addSubSettings(quickMoveBind, quickMoveAll, quickMoveOnlyShulkers, quickMoveReverseOrderInventory, quickMoveReverseOrderContainer);
+        quickMove.addSubSettings(quickMoveBind,
+                                 quickMoveAll,
+                                 quickMoveOnlyShulkers,
+                                 quickMoveReverseOrderInventory,
+                                 quickMoveReverseOrderContainer,
+                                 hijackChestStealer);
         registerSettings(dragMove, quickMove, dragPickup);
     }
 
@@ -64,6 +78,41 @@ public class ContainerTweaks extends ToggleableModule {
     @Subscribe(stage = Stage.PRE)
     public void tick(EventUpdate event) {
         dragMovedSlots.clear();
+        if (quickMove.getValue() && hijackChestStealer.getValue() && mc.screen instanceof AbstractContainerScreen handler) {
+            List<? extends GuiEventListener> children = handler.children();
+            Button rhStealButton = null;
+            Button rhFillButton = null;
+            for (GuiEventListener child : children) {
+                if (child instanceof Button b) {
+                    var buttonMessage = b.getMessage().getString();
+                    if (buttonMessage.equals("Steal"))
+                        rhStealButton = b;
+                    else if (buttonMessage.equals("Fill"))
+                        rhFillButton = b;
+                }
+            }
+            if (rhStealButton != null) {
+                var newButton = Button.builder(rhStealButton.getMessage(), button -> {
+                        handler.getMenu().slots.stream().findFirst().ifPresent(slot -> {
+                            chestStealerQuickMove(slot.container, handler);
+                        });
+                    })
+                    .pos(rhStealButton.getX(), rhStealButton.getY())
+                    .size(rhStealButton.getWidth(), rhStealButton.getHeight());
+                ((IMixinScreen) handler).invokeRemoveWidget(rhStealButton);
+                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton.build());
+            }
+            if (rhFillButton != null) {
+                var newButton = Button.builder(rhFillButton.getMessage(), button -> {
+                        Container fromContainer = mc.player.getInventory();
+                        chestStealerQuickMove(fromContainer, handler);
+                    })
+                    .pos(rhFillButton.getX(), rhFillButton.getY())
+                    .size(rhFillButton.getWidth(), rhFillButton.getHeight());
+                ((IMixinScreen) handler).invokeRemoveWidget(rhFillButton);
+                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton.build());
+            }
+        }
     }
 
     @Subscribe
@@ -120,10 +169,6 @@ public class ContainerTweaks extends ToggleableModule {
                     && slot.mayPickup(mc.player)
                     && slot.hasItem()
                     && slot.container == hoveredSlot.container
-                    // todo: when we fail moving large nbt shulkers, canItemQuickReplace is false when it shouldn't be?
-                    //  the nbt tag on the mouseStack is slightly different in size when its literally the same item
-                    //  there's some interaction with the empty mouse stack state not being seen
-                    //  there's gotta be some processing happening elsewhere during this
                     && (quickMoveAll.getValue() || AbstractContainerMenu.canItemQuickReplace(slot, mouseStack, true))
                 ) {
                     if (quickMoveOnlyShulkers.getValue()
@@ -135,6 +180,26 @@ public class ContainerTweaks extends ToggleableModule {
             }
             pickup(handler, hoveredSlot.index);
             quickMove(handler, hoveredSlot.index);
+        }
+    }
+
+    public void chestStealerQuickMove(
+        final Container fromContainer,
+        final AbstractContainerScreen handler
+    ) {
+        final boolean isFromPlayerInv = fromContainer instanceof Inventory;
+        for(Slot slot : getQuickMoveSlotList(handler, isFromPlayerInv)) {
+            if (slot != null
+                && slot.mayPickup(mc.player)
+                && slot.hasItem()
+                && slot.container == fromContainer
+            ) {
+                if (quickMoveOnlyShulkers.getValue()
+                    && (!(slot.getItem().getItem() instanceof BlockItem blockItem)
+                    || !(blockItem.getBlock() instanceof ShulkerBoxBlock)))
+                    continue;
+                quickMove(handler, slot.index);
+            }
         }
     }
 
