@@ -1,8 +1,10 @@
 package ct.module;
 
+import com.google.common.collect.Lists;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +23,7 @@ import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ContainerTweaks extends ToggleableModule {
@@ -32,6 +35,16 @@ public class ContainerTweaks extends ToggleableModule {
     final BindSetting quickMoveBind = new BindSetting("HoldKey", RusherHackAPI.getBindManager().createKeyboardKey(GLFW.GLFW_KEY_LEFT_CONTROL));
     final BooleanSetting quickMoveAll = new BooleanSetting("MoveAll", "Whether to move only items matching the hovered stack or all items in the container", false);
     final BooleanSetting quickMoveOnlyShulkers = new BooleanSetting("OnlyShulkers", "Whether to only quick move shulkers", false);
+    final BooleanSetting quickMoveReverseOrderInventory = new BooleanSetting(
+        "ReverseFromInv",
+        "Moves items from higher inv slot ids before lower slot id's when moving from player inventory",
+        false
+    );
+    final BooleanSetting quickMoveReverseOrderContainer = new BooleanSetting(
+        "ReverseToInv",
+        "Moves items from higher inv slot ids before lower slot id's when moving to player inventory",
+        false
+    );
     final BooleanSetting dragPickup = new BooleanSetting("DragPickup", true);
     private boolean dragging = false;
     private Set<Integer> dragMovedSlots = new HashSet<>(5);
@@ -39,7 +52,7 @@ public class ContainerTweaks extends ToggleableModule {
     public ContainerTweaks() {
         super("ContainerTweaks", "Simple tweaks for moving items in containers", ModuleCategory.MISC);
         dragMove.addSubSettings(dragMoveBind, maxDragMovesPerTick);
-        quickMove.addSubSettings(quickMoveBind, quickMoveAll, quickMoveOnlyShulkers);
+        quickMove.addSubSettings(quickMoveBind, quickMoveAll, quickMoveOnlyShulkers, quickMoveReverseOrderInventory, quickMoveReverseOrderContainer);
         registerSettings(dragMove, quickMove, dragPickup);
     }
 
@@ -101,7 +114,8 @@ public class ContainerTweaks extends ToggleableModule {
                 pickup(handler, hoveredSlot.index);
                 mouseStack = mc.player.containerMenu.getCarried();
             }
-            for(Slot slot : handler.getMenu().slots) {
+            final boolean isFromPlayerInv = hoveredSlot.container instanceof Inventory;
+            for(Slot slot : getQuickMoveSlotList(handler, isFromPlayerInv)) {
                 if (slot != null
                     && slot.mayPickup(mc.player)
                     && slot.hasItem()
@@ -122,6 +136,20 @@ public class ContainerTweaks extends ToggleableModule {
             pickup(handler, hoveredSlot.index);
             quickMove(handler, hoveredSlot.index);
         }
+    }
+
+    public List<Slot> getQuickMoveSlotList(final AbstractContainerScreen containerScreen, final boolean isFromPlayerInv) {
+        final List<Slot> slots = containerScreen.getMenu().slots;
+        if (isFromPlayerInv)
+            if (quickMoveReverseOrderInventory.getValue())
+                return Lists.reverse(slots);
+            else
+                return slots;
+        else
+            if (quickMoveReverseOrderContainer.getValue())
+                return Lists.reverse(slots);
+            else
+                return slots;
     }
 
     @Subscribe(stage = Stage.PRE)
