@@ -75,15 +75,22 @@ public class ContainerTweaks extends ToggleableModule {
         dragging = false;
     }
 
+    private Button stealButton = null;
+    private Button fillButton = null;
+
     @Subscribe(stage = Stage.PRE)
     public void tick(EventUpdate event) {
         dragMovedSlots.clear();
-        if (quickMove.getValue() && hijackChestStealer.getValue() && mc.screen instanceof AbstractContainerScreen handler) {
+        if (quickMove.getValue()
+            && hijackChestStealer.getValue()
+            && mc.screen instanceof AbstractContainerScreen handler
+            && (fillButton == null || stealButton == null)
+        ) {
             List<? extends GuiEventListener> children = handler.children();
             Button rhStealButton = null;
             Button rhFillButton = null;
             for (GuiEventListener child : children) {
-                if (child instanceof Button b) {
+                if (child instanceof Button b && b != stealButton && b != fillButton) {
                     var buttonMessage = b.getMessage().getString();
                     if (buttonMessage.equals("Steal"))
                         rhStealButton = b;
@@ -98,9 +105,11 @@ public class ContainerTweaks extends ToggleableModule {
                         });
                     })
                     .pos(rhStealButton.getX(), rhStealButton.getY())
-                    .size(rhStealButton.getWidth(), rhStealButton.getHeight());
+                    .size(rhStealButton.getWidth(), rhStealButton.getHeight())
+                    .build();
                 ((IMixinScreen) handler).invokeRemoveWidget(rhStealButton);
-                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton.build());
+                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton);
+                stealButton = newButton;
             }
             if (rhFillButton != null) {
                 var newButton = Button.builder(rhFillButton.getMessage(), button -> {
@@ -108,10 +117,15 @@ public class ContainerTweaks extends ToggleableModule {
                         chestStealerQuickMove(fromContainer, handler);
                     })
                     .pos(rhFillButton.getX(), rhFillButton.getY())
-                    .size(rhFillButton.getWidth(), rhFillButton.getHeight());
+                    .size(rhFillButton.getWidth(), rhFillButton.getHeight())
+                    .build();
                 ((IMixinScreen) handler).invokeRemoveWidget(rhFillButton);
-                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton.build());
+                ((IMixinScreen) handler).invokeAddRenderableWidget(newButton);
+                fillButton = newButton;
             }
+        } else {
+            stealButton = null;
+            fillButton = null;
         }
     }
 
