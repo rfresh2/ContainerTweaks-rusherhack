@@ -1,9 +1,6 @@
 name: Plugin Release
 
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+'
   workflow_dispatch:
 
 jobs:
@@ -18,7 +15,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Elevate wrapper permissions

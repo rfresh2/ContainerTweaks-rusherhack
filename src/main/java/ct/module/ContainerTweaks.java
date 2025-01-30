@@ -150,7 +150,7 @@ public class ContainerTweaks extends ToggleableModule {
             if (mouseStack.isEmpty()) return;
             Slot hoveredSlot = ((IMixinAbstractContainerScreen) handler).getHoveredSlot();
             if (hoveredSlot == null) return;
-            if (handler instanceof CraftingScreen craftingScreen && hoveredSlot.index < craftingScreen.getMenu().getSize()) return;
+            if (handler instanceof CraftingScreen craftingScreen && hoveredSlot.index < craftingScreen.getMenu().getInputGridSlots().size()) return;
             if (handler instanceof InventoryScreen && hoveredSlot.index < 5) return;
             if (mouseStack.getCount() + hoveredSlot.getItem().getCount() > mouseStack.getMaxStackSize()) return;
             pickup(handler, hoveredSlot.index);

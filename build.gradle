@@ -40,14 +40,14 @@ repositories {
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	productionRuntime(modImplementation("net.fabricmc:fabric-loader:0.16.7"))
-	productionRuntime("net.fabricmc:intermediary:1.20.4")
+	productionRuntime("net.fabricmc:intermediary:1.21.3")
 
 	//mojmap + parchment mappings
 	mappings loom.layered() {
 		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-1.20.4:2024.04.14@zip")
+		parchment("org.parchmentmc.data:parchment-1.21.3:2024.12.07@zip")
 	}
-	rusherhackApi "org.rusherhack:rusherhack-api:1.20.4-SNAPSHOT"
+	rusherhackApi "org.rusherhack:rusherhack-api:1.21.3-SNAPSHOT"
 }
 
 
@@ -96,11 +96,11 @@ tasks.register("getPluginVersion") {
 
 loom {
 	//apply accesswidener from rusherhack-api
-	for (final def f in zipTree(this.project.configurations.rusherhackApi.singleFile)) {
-		if(f.name == "rusherhack.accesswidener") {
-			accessWidenerPath = f
-		}
-	}
+//	for (final def f in zipTree(this.project.configurations.rusherhackApi.singleFile)) {
+//		if(f.name == "rusherhack.accesswidener") {
+//			accessWidenerPath = f
+//		}
+//	}
 
 	//disable run configs
 	runConfigs.configureEach {
@@ -108,7 +108,7 @@ loom {
 	}
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
 	// ensure that the encoding is set to UTF-8, no matter what the system default is
 	// this fixes some edge cases with special characters not displaying correctly
