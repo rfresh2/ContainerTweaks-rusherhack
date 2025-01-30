@@ -31,11 +31,22 @@ jobs:
       - name: Build Plugin
         run: ./gradlew build
 
-      - name: Release Artifact
-        uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Get Version
+        run: echo "PLUGIN_VERSION=$(./gradlew -q getPluginVersion)" >> $GITHUB_ENV
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ github.ref_name }}"
-          prerelease: false
-          files: |
-            build/libs/ContainerTweaks-rusherhack-*.jar
+          name: ContainerTweaks-${{ env.PLUGIN_VERSION }}
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+      - name: Github Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.PLUGIN_VERSION }}
+          commit: mainline
+          artifacts: "build/libs/ContainerTweaks-*.jar"
+          allowUpdates: true
+          makeLatest: true
+          omitBodyDuringUpdate: true

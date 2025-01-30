@@ -88,6 +88,12 @@ tasks.register("copyPluginToRunDir", Copy) {
 	into file("run/rusherhack/plugins")
 }
 
+tasks.register("getPluginVersion") {
+	doLast {
+		println(project.mod_version)
+	}
+}
+
 loom {
 	//apply accesswidener from rusherhack-api
 	for (final def f in zipTree(this.project.configurations.rusherhackApi.singleFile)) {
@@ -129,6 +135,10 @@ jar {
 				"Minecraft-Version": project.minecraft_version
 		)
 	}
+}
+
+remapJar {
+	archiveVersion = "$project.version+$project.minecraft_version_range"
 }
 
 
