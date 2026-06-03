@@ -19,7 +19,7 @@ base {
 	archivesName = archiveBaseName
 }
 
-val targetJavaVersion = 17
+val targetJavaVersion = 21
 tasks.withType<JavaCompile>().configureEach {
 	options.encoding = "UTF-8"
 	options.release = targetJavaVersion
@@ -50,7 +50,7 @@ dependencies {
 	modImplementation("net.fabricmc:fabric-loader:0.19.2")
 	mappings(loom.layered {
 		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-$minecraftVersion:2024.11.17@zip")
+		parchment("org.parchmentmc.data:parchment-$minecraftVersion:2025.12.20@zip")
 	})
 	rusherhackApi("org.rusherhack:rusherhack-api:$minecraftVersion-SNAPSHOT")
 }
