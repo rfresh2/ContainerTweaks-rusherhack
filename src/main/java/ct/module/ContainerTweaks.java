@@ -83,7 +83,7 @@ public class ContainerTweaks extends ToggleableModule {
         dragMovedSlots.clear();
         if (quickMove.getValue()
             && hijackChestStealer.getValue()
-            && mc.screen instanceof AbstractContainerScreen handler
+            && mc.gui.screen() instanceof AbstractContainerScreen handler
             && (fillButton == null || stealButton == null)
         ) {
             Button rhStealButton = null;
@@ -130,7 +130,7 @@ public class ContainerTweaks extends ToggleableModule {
     @Subscribe
     public void dragMove(final EventMouse.Move event) {
         if (!dragMove.getValue() || !dragging || !dragMoveBind.getValue().isKeyDown()) return;
-        if (mc.screen instanceof AbstractContainerScreen handler) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen handler) {
             Slot hoveredSlot = ((IMixinAbstractContainerScreen) handler).getHoveredSlot();
             if (hoveredSlot == null) return;
             // this is invoked more frequently than once per tick
@@ -145,7 +145,7 @@ public class ContainerTweaks extends ToggleableModule {
     @Subscribe
     public void dragPickup(final EventMouse.Move event) {
         if (!dragPickup.getValue() || !dragging) return;
-        if (mc.screen instanceof AbstractContainerScreen handler) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen handler) {
             ItemStack mouseStack = mc.player.containerMenu.getCarried();
             if (mouseStack.isEmpty()) return;
             Slot hoveredSlot = ((IMixinAbstractContainerScreen) handler).getHoveredSlot();
@@ -164,7 +164,7 @@ public class ContainerTweaks extends ToggleableModule {
     @Subscribe(stage = Stage.PRE)
     public void quickMove(final EventMouse.Key event) {
         if (!quickMove.getValue() || event.getAction() != 0) return;
-        if (mc.screen instanceof AbstractContainerScreen handler && event.getButton() == 0 && quickMoveBind.getValue().isKeyDown()) {
+        if (mc.gui.screen() instanceof AbstractContainerScreen handler && event.getButton() == 0 && quickMoveBind.getValue().isKeyDown()) {
             Slot hoveredSlot = ((IMixinAbstractContainerScreen) handler).getHoveredSlot();
             if (hoveredSlot == null) return;
             ItemStack mouseStack = mc.player.containerMenu.getCarried();
@@ -240,16 +240,16 @@ public class ContainerTweaks extends ToggleableModule {
 
     // avoiding InventoryUtils.clickSlot as it ticks the network connection on every call for some reason
     // that's fine if you do it once per tick but not for multiple clicks per tick, at least on strict servers
-    public void clickSlot(AbstractContainerScreen screen, int slotId, ClickType clickType) {
+    public void clickSlot(AbstractContainerScreen screen, int slotId, ContainerInput clickType) {
         if (mc.gameMode == null) return;
-        mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slotId, 0, clickType, mc.player);
+        mc.gameMode.handleContainerInput(screen.getMenu().containerId, slotId, 0, clickType, mc.player);
     }
 
     public void pickup(AbstractContainerScreen screen, int slotId) {
-        clickSlot(screen, slotId, ClickType.PICKUP);
+        clickSlot(screen, slotId, ContainerInput.PICKUP);
     }
 
     public void quickMove(AbstractContainerScreen screen, int slotId) {
-        clickSlot(screen, slotId, ClickType.QUICK_MOVE);
+        clickSlot(screen, slotId, ContainerInput.QUICK_MOVE);
     }
 }

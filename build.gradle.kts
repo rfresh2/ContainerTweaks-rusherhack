@@ -2,7 +2,7 @@ import net.fabricmc.loom.task.prod.ClientProductionRunTask
 import net.raphimc.classtokenreplacer.extension.ClassTokenReplacerExtension
 
 plugins {
-	id("net.fabricmc.fabric-loom-remap") version "1.16-SNAPSHOT"
+	id("net.fabricmc.fabric-loom") version "1.19-SNAPSHOT"
 	id("net.raphimc.class-token-replacer") version "1.0.0"
 }
 
@@ -19,7 +19,7 @@ base {
 	archivesName = archiveBaseName
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 25
 tasks.withType<JavaCompile>().configureEach {
 	options.encoding = "UTF-8"
 	options.release = targetJavaVersion
@@ -27,11 +27,11 @@ tasks.withType<JavaCompile>().configureEach {
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
-val rusherhackApi by configurations.creating {
+val rusherhackApi = configurations.create("rusherhackApi") {
 	isCanBeResolved = true
 }
 
@@ -42,16 +42,11 @@ configurations.compileOnly {
 repositories {
 	mavenCentral()
 	maven("https://maven.rusherhack.org/snapshots")
-	maven("https://maven.parchmentmc.org")
 }
 
 dependencies {
 	minecraft("com.mojang:minecraft:$minecraftVersion")
-	modImplementation("net.fabricmc:fabric-loader:0.19.2")
-	mappings(loom.layered {
-		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-$minecraftVersion:2025.12.20@zip")
-	})
+	implementation("net.fabricmc:fabric-loader:0.19.5")
 	rusherhackApi("org.rusherhack:rusherhack-api:$minecraftVersion-SNAPSHOT")
 }
 
@@ -61,11 +56,6 @@ loom {
 		if (file.name == "rusherhack.accesswidener") {
 			accessWidenerPath = file
 		}
-	}
-
-	// disable run configs
-	runConfigs.configureEach {
-		setIdeConfigGenerated(false)
 	}
 }
 
@@ -79,8 +69,8 @@ tasks {
 	}
 	val copyPluginToRunDir = register("copyPluginToRunDir", Copy::class) {
 		group = "build"
-		dependsOn(remapJar)
-		from(remapJar.map { it.outputs })
+		dependsOn(jar)
+		from(jar.map { it.outputs })
 		into(file("run/rusherhack/plugins"))
 	}
 	register("runPlugin", ClientProductionRunTask::class) {
@@ -90,13 +80,12 @@ tasks {
 		if (!rusherLoaderJarFile.exists()) {
 			throw GradleException("rusherhack-loader.jar must be copied to the lib directory!")
 		}
-		val rusherLoaderJarPath = rusherLoaderJarFile.absolutePath
+		mods.from(layout.projectDirectory.dir("lib"))
 		jvmArgs.addAll(listOf(
-			"-Drusherhack.enablePlugins=true",
-			"-Dfabric.addMods=$rusherLoaderJarPath"
+			"-Drusherhack.enablePlugins=true"
 		))
 	}
-	remapJar {
+	jar {
 		archiveVersion = "$modVersion+$mcVersionRange"
 	}
 }
